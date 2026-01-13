@@ -1,3 +1,8 @@
+--[[
+    Refz UI Library
+    Full Version with Tab Support
+]]--
+
 local T=game:GetService("TweenService")
 local U=game:GetService("UserInputService")
 local R=game:GetService("RunService")
@@ -8,10 +13,11 @@ local M=U.TouchEnabled and not U.KeyboardEnabled
 local A=Color3.fromRGB(207,1,0)
 local Th={}
 F={}  -- Global flags table
-local C={}
 
 local function Tw(o,p,d)
-    T:Create(o,TweenInfo.new(d or.15,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play()
+    pcall(function()
+        T:Create(o,TweenInfo.new(d or.15,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play()
+    end)
 end
 
 local function Snd(id)
@@ -28,7 +34,9 @@ end
 local function Cr(c,p)
     local i=Instance.new(c)
     for k,v in pairs(p)do
-        if k~="Parent"then i[k]=v end
+        if k~="Parent"then 
+            pcall(function() i[k]=v end)
+        end
     end
     if p.Parent then i.Parent=p.Parent end
     return i
@@ -37,22 +45,67 @@ end
 local Lib={}
 
 function Lib.new(title, configName)
-    local W={Sections={},TK=Enum.KeyCode.RightShift,V=true,N={}}
+    local W={Sections={},TK=Enum.KeyCode.RightShift,V=true,N={},ConfigName=configName or"RefzConfig"}
     
-    local G=Cr("ScreenGui",{Name="Refz",ResetOnSpawn=false,ZIndexBehavior=Enum.ZIndexBehavior.Sibling,Parent=R:IsStudio()and L.PlayerGui or game:GetService("CoreGui")})
-    local mw,mh=M and 400 or 550,M and 300 or 400
-    local Main=Cr("Frame",{Name="Main",AnchorPoint=Vector2.new(.5,.5),Position=UDim2.new(.5,0,.5,0),Size=UDim2.new(0,mw,0,mh),BackgroundColor3=Color3.fromRGB(15,15,15),BorderSizePixel=0,Parent=G})
-    Cr("UICorner",{CornerRadius=UDim.new(0,6),Parent=Main})
-    Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Thickness=1,Parent=Main})
+    -- Create main GUI
+    local G=Cr("ScreenGui",{
+        Name="RefzUI_"..math.random(1000,9999),
+        ResetOnSpawn=false,
+        ZIndexBehavior=Enum.ZIndexBehavior.Sibling,
+        Parent=R:IsStudio()and L.PlayerGui or game:GetService("CoreGui")
+    })
+    
+    local mw,mh=M and 420 or 600,M and 350 or 450
+    local Main=Cr("Frame",{
+        Name="Main",
+        AnchorPoint=Vector2.new(.5,.5),
+        Position=UDim2.new(.5,0,.5,0),
+        Size=UDim2.new(0,mw,0,mh),
+        BackgroundColor3=Color3.fromRGB(15,15,15),
+        BorderSizePixel=0,
+        Parent=G
+    })
+    Cr("UICorner",{CornerRadius=UDim.new(0,8),Parent=Main})
+    Cr("UIStroke",{Color=Color3.fromRGB(45,45,45),Thickness=1,Parent=Main})
 
-    local Hdr=Cr("Frame",{Size=UDim2.new(1,0,0,32),BackgroundColor3=Color3.fromRGB(20,20,20),BorderSizePixel=0,Parent=Main})
-    Cr("UICorner",{CornerRadius=UDim.new(0,6),Parent=Hdr})
-    local Tit=Cr("TextLabel",{Position=UDim2.new(0,12,0,0),Size=UDim2.new(1,-24,1,0),BackgroundTransparency=1,Text=title or "Refz Hub",TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.GothamBold,TextSize=M and 12 or 14,TextXAlignment=Enum.TextXAlignment.Left,Parent=Hdr})
+    -- Header
+    local Hdr=Cr("Frame",{
+        Size=UDim2.new(1,0,0,36),
+        BackgroundColor3=Color3.fromRGB(20,20,20),
+        BorderSizePixel=0,
+        Parent=Main
+    })
+    Cr("UICorner",{CornerRadius=UDim.new(0,8),Parent=Hdr})
+    
+    local Tit=Cr("TextLabel",{
+        Position=UDim2.new(0,14,0,0),
+        Size=UDim2.new(1,-28,1,0),
+        BackgroundTransparency=1,
+        Text=title or"Refz Hub",
+        TextColor3=Color3.fromRGB(220,220,220),
+        Font=Enum.Font.GothamBold,
+        TextSize=M and 13 or 15,
+        TextXAlignment=Enum.TextXAlignment.Left,
+        Parent=Hdr
+    })
 
+    -- Mobile toggle button
     if M then
-        local MT=Cr("TextButton",{AnchorPoint=Vector2.new(1,0),Position=UDim2.new(1,-10,0,10),Size=UDim2.new(0,40,0,40),BackgroundColor3=Color3.fromRGB(25,25,25),BorderSizePixel=0,Text="☰",TextColor3=A,Font=Enum.Font.GothamBold,TextSize=20,Parent=G,ZIndex=1000})
-        Cr("UICorner",{CornerRadius=UDim.new(0,8),Parent=MT})
-        Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Parent=MT})
+        local MT=Cr("TextButton",{
+            AnchorPoint=Vector2.new(1,0),
+            Position=UDim2.new(1,-12,0,12),
+            Size=UDim2.new(0,44,0,44),
+            BackgroundColor3=Color3.fromRGB(25,25,25),
+            BorderSizePixel=0,
+            Text="☰",
+            TextColor3=A,
+            Font=Enum.Font.GothamBold,
+            TextSize=22,
+            Parent=G,
+            ZIndex=1000
+        })
+        Cr("UICorner",{CornerRadius=UDim.new(0,10),Parent=MT})
+        Cr("UIStroke",{Color=Color3.fromRGB(45,45,45),Parent=MT})
         MT.MouseButton1Click:Connect(function()
             Snd(12221967)
             W.V=not W.V
@@ -60,13 +113,66 @@ function Lib.new(title, configName)
         end)
     end
 
-    local Inr=Cr("Frame",{Position=UDim2.new(0,1,0,33),Size=UDim2.new(1,-2,1,-34),BackgroundColor3=Color3.fromRGB(13,13,13),BorderSizePixel=0,Parent=Main})
-    Cr("UICorner",{CornerRadius=UDim.new(0,6),Parent=Inr})
+    -- Content area
+    local Inr=Cr("Frame",{
+        Position=UDim2.new(0,1,0,37),
+        Size=UDim2.new(1,-2,1,-38),
+        BackgroundColor3=Color3.fromRGB(13,13,13),
+        BorderSizePixel=0,
+        Parent=Main
+    })
+    Cr("UICorner",{CornerRadius=UDim.new(0,8),Parent=Inr})
     
-    local Content=Cr("Frame",{Position=UDim2.new(0,8,0,8),Size=UDim2.new(1,-16,1,-16),BackgroundTransparency=1,Parent=Inr})
+    local Content=Cr("Frame",{
+        Position=UDim2.new(0,10,0,10),
+        Size=UDim2.new(1,-20,1,-20),
+        BackgroundTransparency=1,
+        Parent=Inr
+    })
 
-    -- Dragging
-    local Dr=Cr("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",ZIndex=2,Parent=Hdr})
+    -- Section/Tab containers
+    local SectionContainer=Cr("Frame",{
+        Size=UDim2.new(1,0,0,38),
+        BackgroundTransparency=1,
+        Parent=Content
+    })
+    Cr("UIListLayout",{
+        FillDirection=Enum.FillDirection.Horizontal,
+        SortOrder=Enum.SortOrder.LayoutOrder,
+        Padding=UDim.new(0,6),
+        Parent=SectionContainer
+    })
+
+    local TabContainer=Cr("Frame",{
+        Position=UDim2.new(0,0,0,46),
+        Size=UDim2.new(1,0,0,32),
+        BackgroundTransparency=1,
+        Visible=false,
+        Parent=Content
+    })
+    Cr("UIListLayout",{
+        FillDirection=Enum.FillDirection.Horizontal,
+        SortOrder=Enum.SortOrder.LayoutOrder,
+        Padding=UDim.new(0,4),
+        Parent=TabContainer
+    })
+
+    local PageContainer=Cr("Frame",{
+        Position=UDim2.new(0,0,0,86),
+        Size=UDim2.new(1,0,1,-86),
+        BackgroundTransparency=1,
+        Parent=Content
+    })
+
+    -- Dragging functionality
+    local Dr=Cr("TextButton",{
+        Size=UDim2.new(1,0,1,0),
+        BackgroundTransparency=1,
+        Text="",
+        ZIndex=2,
+        Parent=Hdr
+    })
+    
     local drg,ds,sp=false,nil,nil
     Dr.InputBegan:Connect(function(i)
         if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
@@ -75,11 +181,13 @@ function Lib.new(title, configName)
             sp=Main.Position
         end
     end)
+    
     U.InputEnded:Connect(function(i)
         if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
             drg=false
         end
     end)
+    
     U.InputChanged:Connect(function(i)
         if drg and(i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch)then
             local d=i.Position-ds
@@ -87,133 +195,387 @@ function Lib.new(title, configName)
         end
     end)
 
-    -- Toggle Key
+    -- Toggle key
     U.InputBegan:Connect(function(i,gp)
         if not gp and i.KeyCode==W.TK then
             W.V=not W.V
             Main.Visible=W.V
+            Snd(12221967)
         end
     end)
 
+    -- Set toggle key method
     function W:SetToggleKey(key)
         W.TK=key
     end
 
+    -- Notification system
     function W:Notify(data)
-        if type(data)=="string"then data={Description=data,Duration=3}end
-        Snd(12221967)
-        local dur=data.Duration or 3
-        local nw,nh=250,50
-        local nt=Cr("Frame",{Size=UDim2.new(0,nw,0,nh),BackgroundColor3=Color3.fromRGB(20,20,20),BorderSizePixel=0,Position=UDim2.new(1,10,1,0),ClipsDescendants=false,Parent=G})
-        Cr("UICorner",{CornerRadius=UDim.new(0,6),Parent=nt})
-        Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Parent=nt})
-        
-        local yPos=0
-        if data.Title then
-            local ntit=Cr("TextLabel",{Position=UDim2.new(0,8,0,4),Size=UDim2.new(1,-16,0,16),BackgroundTransparency=1,Text=data.Title,TextColor3=Color3.fromRGB(220,220,220),Font=Enum.Font.GothamBold,TextSize=11,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,Parent=nt})
-            yPos=18
+        if type(data)=="string"then 
+            data={Description=data,Duration=3}
         end
         
-        local ndesc=Cr("TextLabel",{Position=UDim2.new(0,8,0,yPos),Size=UDim2.new(1,-16,1,-yPos-4),BackgroundTransparency=1,Text=data.Description or"",TextColor3=Color3.fromRGB(180,180,180),Font=Enum.Font.Gotham,TextSize=10,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,Parent=nt})
+        Snd(12221967)
+        local dur=data.Duration or 3
+        local nw,nh=280,data.Title and 65 or 50
+        
+        local nt=Cr("Frame",{
+            Size=UDim2.new(0,nw,0,nh),
+            BackgroundColor3=Color3.fromRGB(20,20,20),
+            BorderSizePixel=0,
+            Position=UDim2.new(1,10,1,0),
+            ClipsDescendants=false,
+            Parent=G
+        })
+        Cr("UICorner",{CornerRadius=UDim.new(0,8),Parent=nt})
+        Cr("UIStroke",{Color=Color3.fromRGB(45,45,45),Thickness=1,Parent=nt})
+        
+        local yPos=8
+        if data.Title then
+            local ntit=Cr("TextLabel",{
+                Position=UDim2.new(0,10,0,6),
+                Size=UDim2.new(1,-20,0,18),
+                BackgroundTransparency=1,
+                Text=data.Title,
+                TextColor3=Color3.fromRGB(230,230,230),
+                Font=Enum.Font.GothamBold,
+                TextSize=12,
+                TextWrapped=true,
+                TextXAlignment=Enum.TextXAlignment.Left,
+                Parent=nt
+            })
+            yPos=26
+        end
+        
+        local ndesc=Cr("TextLabel",{
+            Position=UDim2.new(0,10,0,yPos),
+            Size=UDim2.new(1,-20,1,-yPos-6),
+            BackgroundTransparency=1,
+            Text=data.Description or"",
+            TextColor3=Color3.fromRGB(180,180,180),
+            Font=Enum.Font.Gotham,
+            TextSize=10,
+            TextWrapped=true,
+            TextXAlignment=Enum.TextXAlignment.Left,
+            TextYAlignment=Enum.TextYAlignment.Top,
+            Parent=nt
+        })
         
         table.insert(W.N,nt)
         for i,n in ipairs(W.N)do
-            Tw(n,{Position=UDim2.new(1,-nw-10,1,-10-(i*56))},.3)
+            Tw(n,{Position=UDim2.new(1,-nw-12,1,-12-(i*(nh+8)))},.3)
         end
+        
         task.delay(dur,function()
             Tw(nt,{Position=UDim2.new(1,10,nt.Position.Y.Scale,nt.Position.Y.Offset)},.3)
             task.wait(.4)
             for i,n in ipairs(W.N)do
-                if n==nt then table.remove(W.N,i)break end
+                if n==nt then 
+                    table.remove(W.N,i)
+                    break 
+                end
             end
             nt:Destroy()
             for i,n in ipairs(W.N)do
-                Tw(n,{Position=UDim2.new(1,-nw-10,1,-10-(i*56))},.3)
+                Tw(n,{Position=UDim2.new(1,-nw-12,1,-12-(i*(nh+8)))},.3)
             end
         end)
     end
 
+    -- Create Section method
     function W:CreateSection(name)
-        local Sec={Name=name,Tabs={},CT=nil}
-        local SF=Cr("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Visible=#W.Sections==0,Parent=Content})
-        local TC=Cr("Frame",{Position=UDim2.new(0,0,0,0),Size=UDim2.new(1,0,0,32),BackgroundTransparency=1,Parent=SF})
-        Cr("UIListLayout",{FillDirection=Enum.FillDirection.Horizontal,SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,4),Parent=TC})
-        local TCC=Cr("Frame",{Position=UDim2.new(0,0,0,38),Size=UDim2.new(1,0,1,-38),BackgroundTransparency=1,Parent=SF})
+        local Sec={Name=name,Tabs={},CurrentTab=nil}
+        
+        local SB=Cr("TextButton",{
+            Size=UDim2.new(0,110,0,32),
+            BackgroundColor3=Color3.fromRGB(22,22,22),
+            BorderSizePixel=0,
+            Text=name,
+            TextColor3=Color3.fromRGB(160,160,160),
+            Font=Enum.Font.GothamBold,
+            TextSize=12,
+            AutoButtonColor=false,
+            Parent=SectionContainer
+        })
+        Cr("UICorner",{CornerRadius=UDim.new(0,6),Parent=SB})
+        
+        SB.MouseButton1Click:Connect(function()
+            Snd(12221967)
+            
+            -- Hide all sections
+            for _,s in ipairs(W.Sections)do
+                s.TabContainer.Visible=false
+                Tw(s.Button,{
+                    BackgroundColor3=Color3.fromRGB(22,22,22),
+                    TextColor3=Color3.fromRGB(160,160,160)
+                })
+                for _,t in ipairs(s.Data.Tabs)do
+                    t.Frame.Visible=false
+                end
+            end
+            
+            -- Show this section
+            TabContainer.Visible=true
+            Tw(SB,{
+                BackgroundColor3=A,
+                TextColor3=Color3.fromRGB(255,255,255)
+            })
+            
+            -- Show first tab
+            if Sec.Tabs[1]then
+                Sec.Tabs[1].Frame.Visible=true
+                Tw(Sec.Tabs[1].Button,{
+                    BackgroundColor3=A,
+                    TextColor3=Color3.fromRGB(255,255,255)
+                })
+            end
+        end)
 
+        -- Create Tab method
         function Sec:CreateTab(nm,icon)
             local Tab={Name=nm,Elements={}}
-            local TB=Cr("TextButton",{Size=UDim2.new(0,100,0,28),BackgroundColor3=Color3.fromRGB(20,20,20),BorderSizePixel=0,Text=nm,TextColor3=Color3.fromRGB(150,150,150),Font=Enum.Font.GothamBold,TextSize=11,AutoButtonColor=false,Parent=TC})
-            Cr("UICorner",{CornerRadius=UDim.new(0,4),Parent=TB})
             
-            local TF=Cr("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Visible=false,Parent=TCC})
-            local LS=Cr("ScrollingFrame",{Size=UDim2.new(.5,-4,1,0),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=4,ScrollBarImageColor3=Color3.fromRGB(60,60,60),CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,Parent=TF})
-            local LC=Cr("Frame",{Size=UDim2.new(1,-4,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=LS})
-            Cr("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,8),Parent=LC})
+            local TB=Cr("TextButton",{
+                Size=UDim2.new(0,100,0,28),
+                BackgroundColor3=Color3.fromRGB(18,18,18),
+                BorderSizePixel=0,
+                Text=nm,
+                TextColor3=Color3.fromRGB(140,140,140),
+                Font=Enum.Font.GothamBold,
+                TextSize=11,
+                AutoButtonColor=false,
+                Parent=TabContainer
+            })
+            Cr("UICorner",{CornerRadius=UDim.new(0,5),Parent=TB})
             
-            local RS=Cr("ScrollingFrame",{Position=UDim2.new(.5,4,0,0),Size=UDim2.new(.5,-4,1,0),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=4,ScrollBarImageColor3=Color3.fromRGB(60,60,60),CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,Parent=TF})
-            local RC=Cr("Frame",{Size=UDim2.new(1,-4,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=RS})
-            Cr("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,8),Parent=RC})
+            local TF=Cr("Frame",{
+                Size=UDim2.new(1,0,1,0),
+                BackgroundTransparency=1,
+                Visible=false,
+                Parent=PageContainer
+            })
+            
+            local LS=Cr("ScrollingFrame",{
+                Size=UDim2.new(.5,-4,1,0),
+                BackgroundTransparency=1,
+                BorderSizePixel=0,
+                ScrollBarThickness=4,
+                ScrollBarImageColor3=Color3.fromRGB(70,70,70),
+                CanvasSize=UDim2.new(0,0,0,0),
+                AutomaticCanvasSize=Enum.AutomaticSize.Y,
+                Parent=TF
+            })
+            local LC=Cr("Frame",{
+                Size=UDim2.new(1,-6,0,0),
+                AutomaticSize=Enum.AutomaticSize.Y,
+                BackgroundTransparency=1,
+                Parent=LS
+            })
+            Cr("UIListLayout",{
+                SortOrder=Enum.SortOrder.LayoutOrder,
+                Padding=UDim.new(0,8),
+                Parent=LC
+            })
+            
+            local RS=Cr("ScrollingFrame",{
+                Position=UDim2.new(.5,4,0,0),
+                Size=UDim2.new(.5,-4,1,0),
+                BackgroundTransparency=1,
+                BorderSizePixel=0,
+                ScrollBarThickness=4,
+                ScrollBarImageColor3=Color3.fromRGB(70,70,70),
+                CanvasSize=UDim2.new(0,0,0,0),
+                AutomaticCanvasSize=Enum.AutomaticSize.Y,
+                Parent=TF
+            })
+            local RC=Cr("Frame",{
+                Size=UDim2.new(1,-6,0,0),
+                AutomaticSize=Enum.AutomaticSize.Y,
+                BackgroundTransparency=1,
+                Parent=RS
+            })
+            Cr("UIListLayout",{
+                SortOrder=Enum.SortOrder.LayoutOrder,
+                Padding=UDim.new(0,8),
+                Parent=RC
+            })
 
             TB.MouseButton1Click:Connect(function()
                 Snd(12221967)
+                
+                -- Hide all tabs in this section
                 for _,t in ipairs(Sec.Tabs)do
                     t.Frame.Visible=false
-                    Tw(t.Button,{BackgroundColor3=Color3.fromRGB(20,20,20),TextColor3=Color3.fromRGB(150,150,150)})
+                    Tw(t.Button,{
+                        BackgroundColor3=Color3.fromRGB(18,18,18),
+                        TextColor3=Color3.fromRGB(140,140,140)
+                    })
                 end
+                
+                -- Show this tab
                 TF.Visible=true
-                Tw(TB,{BackgroundColor3=A,TextColor3=Color3.fromRGB(255,255,255)})
+                Tw(TB,{
+                    BackgroundColor3=A,
+                    TextColor3=Color3.fromRGB(255,255,255)
+                })
             end)
 
+            -- CreateSection (just for compatibility)
             function Tab:CreateSection(txt)
                 return{LC=LC,RC=RC,Tab=Tab}
             end
 
+            -- CreateToggle
             function Tab:CreateToggle(cfg)
                 local tg=cfg.Default or false
-                local pr=LC
-                if #LC:GetChildren()>#RC:GetChildren()+2 then pr=RC end
+                local pr=#LC:GetChildren()<#RC:GetChildren()and LC or RC
                 
-                local Tg=Cr("Frame",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Parent=pr})
-                local TL=Cr("TextLabel",{Size=UDim2.new(1,-42,0,20),BackgroundTransparency=1,Text=cfg.Name,TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.Gotham,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left,Parent=Tg})
-                local TO=Cr("Frame",{Position=UDim2.new(1,-38,0,2),Size=UDim2.new(0,38,0,16),BackgroundColor3=Color3.fromRGB(10,10,10),BorderSizePixel=0,Parent=Tg})
+                local Tg=Cr("Frame",{
+                    Size=UDim2.new(1,0,0,22),
+                    BackgroundTransparency=1,
+                    Parent=pr
+                })
+                
+                local TL=Cr("TextLabel",{
+                    Size=UDim2.new(1,-46,0,22),
+                    BackgroundTransparency=1,
+                    Text=cfg.Name,
+                    TextColor3=Color3.fromRGB(210,210,210),
+                    Font=Enum.Font.Gotham,
+                    TextSize=11,
+                    TextXAlignment=Enum.TextXAlignment.Left,
+                    Parent=Tg
+                })
+                
+                local TO=Cr("Frame",{
+                    Position=UDim2.new(1,-42,0,3),
+                    Size=UDim2.new(0,42,0,16),
+                    BackgroundColor3=Color3.fromRGB(10,10,10),
+                    BorderSizePixel=0,
+                    Parent=Tg
+                })
                 Cr("UICorner",{CornerRadius=UDim.new(1,0),Parent=TO})
-                local TI=Cr("Frame",{Position=UDim2.new(0,1,0,1),Size=UDim2.new(1,-2,1,-2),BackgroundColor3=A,BackgroundTransparency=tg and 0 or 1,BorderSizePixel=0,Parent=TO})
+                
+                local TI=Cr("Frame",{
+                    Position=UDim2.new(0,1,0,1),
+                    Size=UDim2.new(1,-2,1,-2),
+                    BackgroundColor3=A,
+                    BackgroundTransparency=tg and 0 or 1,
+                    BorderSizePixel=0,
+                    Parent=TO
+                })
                 table.insert(Th,TI)
                 Cr("UICorner",{CornerRadius=UDim.new(1,0),Parent=TI})
-                local Tc=Cr("Frame",{Position=tg and UDim2.new(1,-15,0.5,-5)or UDim2.new(0,3,0.5,-5),Size=UDim2.new(0,10,0,10),BackgroundColor3=Color3.fromRGB(255,255,255),BorderSizePixel=0,Parent=TO})
+                
+                local Tc=Cr("Frame",{
+                    Position=tg and UDim2.new(1,-16,0.5,-6)or UDim2.new(0,4,0.5,-6),
+                    Size=UDim2.new(0,12,0,12),
+                    BackgroundColor3=Color3.fromRGB(255,255,255),
+                    BorderSizePixel=0,
+                    Parent=TO
+                })
                 Cr("UICorner",{CornerRadius=UDim.new(1,0),Parent=Tc})
                 
                 if cfg.Flag then F[cfg.Flag]=tg end
                 
-                local Btn=Cr("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",Parent=Tg})
+                local Btn=Cr("TextButton",{
+                    Size=UDim2.new(1,0,1,0),
+                    BackgroundTransparency=1,
+                    Text="",
+                    Parent=Tg
+                })
+                
                 Btn.MouseButton1Click:Connect(function()
                     Snd(12221967)
                     tg=not tg
                     if cfg.Flag then F[cfg.Flag]=tg end
                     Tw(TI,{BackgroundTransparency=tg and 0 or 1},.2)
-                    Tw(Tc,{Position=tg and UDim2.new(1,-15,0.5,-5)or UDim2.new(0,3,0.5,-5)},.2)
-                    if cfg.Callback then cfg.Callback(tg)end
+                    Tw(Tc,{Position=tg and UDim2.new(1,-16,0.5,-6)or UDim2.new(0,4,0.5,-6)},.2)
+                    if cfg.Callback then 
+                        task.spawn(cfg.Callback,tg)
+                    end
                 end)
                 
-                return{Set=function(self,v)tg=v if cfg.Flag then F[cfg.Flag]=v end Tw(TI,{BackgroundTransparency=tg and 0 or 1},.2)Tw(Tc,{Position=tg and UDim2.new(1,-15,0.5,-5)or UDim2.new(0,3,0.5,-5)},.2)if cfg.Callback then cfg.Callback(tg)end end}
+                return{
+                    Set=function(self,v)
+                        tg=v 
+                        if cfg.Flag then F[cfg.Flag]=v end
+                        Tw(TI,{BackgroundTransparency=tg and 0 or 1},.2)
+                        Tw(Tc,{Position=tg and UDim2.new(1,-16,0.5,-6)or UDim2.new(0,4,0.5,-6)},.2)
+                        if cfg.Callback then 
+                            task.spawn(cfg.Callback,tg)
+                        end
+                    end
+                }
             end
 
+            -- CreateSlider
             function Tab:CreateSlider(cfg)
                 local sl,vl=false,cfg.Default or cfg.Min
-                local pr=LC
-                if #LC:GetChildren()>#RC:GetChildren()+2 then pr=RC end
+                local pr=#LC:GetChildren()<#RC:GetChildren()and LC or RC
                 
-                local Sl=Cr("Frame",{Size=UDim2.new(1,0,0,36),BackgroundTransparency=1,Parent=pr})
-                local SL=Cr("TextLabel",{Size=UDim2.new(1,-50,0,16),BackgroundTransparency=1,Text=cfg.Name,TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.Gotham,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left,Parent=Sl})
-                local SV=Cr("TextLabel",{Size=UDim2.new(1,0,0,16),BackgroundTransparency=1,Text=tostring(vl),TextColor3=Color3.fromRGB(140,140,140),Font=Enum.Font.Gotham,TextSize=10,TextXAlignment=Enum.TextXAlignment.Right,Parent=Sl})
-                local SO=Cr("Frame",{Position=UDim2.new(0,0,0,20),Size=UDim2.new(1,0,0,8),BackgroundColor3=Color3.fromRGB(10,10,10),BorderSizePixel=0,Parent=Sl})
-                Cr("UICorner",{CornerRadius=UDim.new(0,4),Parent=SO})
-                local SI=Cr("Frame",{Position=UDim2.new(0,1,0,1),Size=UDim2.new(1,-2,1,-2),BackgroundTransparency=1,BorderSizePixel=0,Parent=SO})
-                Cr("UICorner",{CornerRadius=UDim.new(0,4),Parent=SI})
-                local Fl=Cr("Frame",{Size=UDim2.new(0,0,1,0),BackgroundColor3=A,BorderSizePixel=0,Parent=SI})
+                local Sl=Cr("Frame",{
+                    Size=UDim2.new(1,0,0,40),
+                    BackgroundTransparency=1,
+                    Parent=pr
+                })
+                
+                local SL=Cr("TextLabel",{
+                    Size=UDim2.new(1,-55,0,18),
+                    BackgroundTransparency=1,
+                    Text=cfg.Name,
+                    TextColor3=Color3.fromRGB(210,210,210),
+                    Font=Enum.Font.Gotham,
+                    TextSize=11,
+                    TextXAlignment=Enum.TextXAlignment.Left,
+                    Parent=Sl
+                })
+                
+                local SV=Cr("TextLabel",{
+                    Size=UDim2.new(1,0,0,18),
+                    BackgroundTransparency=1,
+                    Text=tostring(vl),
+                    TextColor3=Color3.fromRGB(150,150,150),
+                    Font=Enum.Font.GothamMedium,
+                    TextSize=10,
+                    TextXAlignment=Enum.TextXAlignment.Right,
+                    Parent=Sl
+                })
+                
+                local SO=Cr("Frame",{
+                    Position=UDim2.new(0,0,0,22),
+                    Size=UDim2.new(1,0,0,10),
+                    BackgroundColor3=Color3.fromRGB(10,10,10),
+                    BorderSizePixel=0,
+                    Parent=Sl
+                })
+                Cr("UICorner",{CornerRadius=UDim.new(0,5),Parent=SO})
+                
+                local SI=Cr("Frame",{
+                    Position=UDim2.new(0,1,0,1),
+                    Size=UDim2.new(1,-2,1,-2),
+                    BackgroundTransparency=1,
+                    BorderSizePixel=0,
+                    Parent=SO
+                })
+                Cr("UICorner",{CornerRadius=UDim.new(0,5),Parent=SI})
+                
+                local Fl=Cr("Frame",{
+                    Size=UDim2.new(0,0,1,0),
+                    BackgroundColor3=A,
+                    BorderSizePixel=0,
+                    Parent=SI
+                })
                 table.insert(Th,Fl)
-                Cr("UICorner",{CornerRadius=UDim.new(0,4),Parent=Fl})
-                local Ci=Cr("Frame",{Position=UDim2.new(1,-6,0.5,-6),Size=UDim2.new(0,12,0,12),BackgroundColor3=Color3.fromRGB(255,255,255),BorderSizePixel=0,Parent=Fl})
+                Cr("UICorner",{CornerRadius=UDim.new(0,5),Parent=Fl})
+                
+                local Ci=Cr("Frame",{
+                    Position=UDim2.new(1,-7,0.5,-7),
+                    Size=UDim2.new(0,14,0,14),
+                    BackgroundColor3=Color3.fromRGB(255,255,255),
+                    BorderSizePixel=0,
+                    Parent=Fl
+                })
                 Cr("UICorner",{CornerRadius=UDim.new(1,0),Parent=Ci})
 
                 local function Set(v)
@@ -223,7 +585,9 @@ function Lib.new(title, configName)
                     SV.Text=tostring(v)
                     vl=v
                     if cfg.Flag then F[cfg.Flag]=v end
-                    if cfg.Callback then cfg.Callback(v)end
+                    if cfg.Callback then 
+                        task.spawn(cfg.Callback,v)
+                    end
                 end
 
                 local function Sld(i)
@@ -232,7 +596,13 @@ function Lib.new(title, configName)
                     Set(v)
                 end
 
-                local Btn=Cr("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",Parent=SO})
+                local Btn=Cr("TextButton",{
+                    Size=UDim2.new(1,0,1,0),
+                    BackgroundTransparency=1,
+                    Text="",
+                    Parent=SO
+                })
+                
                 Btn.InputBegan:Connect(function(i)
                     if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
                         Snd(3398620867)
@@ -240,11 +610,13 @@ function Lib.new(title, configName)
                         Sld(i)
                     end
                 end)
+                
                 Btn.InputEnded:Connect(function(i)
                     if i.UserInputType==Enum.UserInputType.MouseButton1 or i.UserInputType==Enum.UserInputType.Touch then
                         sl=false
                     end
                 end)
+                
                 U.InputChanged:Connect(function(i)
                     if sl and(i.UserInputType==Enum.UserInputType.MouseMovement or i.UserInputType==Enum.UserInputType.Touch)then
                         Sld(i)
@@ -255,37 +627,119 @@ function Lib.new(title, configName)
                 return{Set=Set}
             end
 
+            -- CreateDropdown
             function Tab:CreateDropdown(cfg)
                 local opn,sel=false,cfg.Default
-                local pr=LC
-                if #LC:GetChildren()>#RC:GetChildren()+2 then pr=RC end
+                local pr=#LC:GetChildren()<#RC:GetChildren()and LC or RC
                 
-                local Dp=Cr("Frame",{Size=UDim2.new(1,0,0,46),BackgroundTransparency=1,Parent=pr,ZIndex=100,ClipsDescendants=false})
-                local DL=Cr("TextLabel",{Size=UDim2.new(1,-10,0,16),BackgroundTransparency=1,Text=cfg.Name,TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.Gotham,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left,Parent=Dp})
-                local DB=Cr("TextButton",{Position=UDim2.new(0,0,0,20),Size=UDim2.new(1,0,0,24),BackgroundColor3=Color3.fromRGB(22,22,22),BorderSizePixel=0,Text="",AutoButtonColor=false,Parent=Dp,ZIndex=5})
-                Cr("UICorner",{CornerRadius=UDim.new(0,4),Parent=DB})
-                local DT=Cr("TextLabel",{Position=UDim2.new(0,6,0,0),Size=UDim2.new(1,-30,1,0),BackgroundTransparency=1,Text=sel or"Select...",TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.Gotham,TextSize=10,TextXAlignment=Enum.TextXAlignment.Left,Parent=DB})
-                local DI=Cr("TextLabel",{Position=UDim2.new(1,-22,0,4),Size=UDim2.new(0,16,0,16),BackgroundTransparency=1,Text="▼",TextColor3=Color3.fromRGB(140,140,140),Font=Enum.Font.Gotham,TextSize=10,Parent=DB})
-                local DC=Cr("Frame",{Position=UDim2.new(0,0,1,2),Size=UDim2.new(1,0,0,0),BackgroundColor3=Color3.fromRGB(18,18,18),BorderSizePixel=0,ClipsDescendants=true,Parent=Dp,ZIndex=6})
-                Cr("UICorner",{CornerRadius=UDim.new(0,4),Parent=DC})
+                local Dp=Cr("Frame",{
+                    Size=UDim2.new(1,0,0,50),
+                    BackgroundTransparency=1,
+                    Parent=pr,
+                    ZIndex=100,
+                    ClipsDescendants=false
+                })
+                
+                local DL=Cr("TextLabel",{
+                    Size=UDim2.new(1,-10,0,18),
+                    BackgroundTransparency=1,
+                    Text=cfg.Name,
+                    TextColor3=Color3.fromRGB(210,210,210),
+                    Font=Enum.Font.Gotham,
+                    TextSize=11,
+                    TextXAlignment=Enum.TextXAlignment.Left,
+                    Parent=Dp
+                })
+                
+                local DB=Cr("TextButton",{
+                    Position=UDim2.new(0,0,0,22),
+                    Size=UDim2.new(1,0,0,26),
+                    BackgroundColor3=Color3.fromRGB(22,22,22),
+                    BorderSizePixel=0,
+                    Text="",
+                    AutoButtonColor=false,
+                    Parent=Dp,
+                    ZIndex=5
+                })
+                Cr("UICorner",{CornerRadius=UDim.new(0,5),Parent=DB})
+                
+                local DT=Cr("TextLabel",{
+                    Position=UDim2.new(0,8,0,0),
+                    Size=UDim2.new(1,-32,1,0),
+                    BackgroundTransparency=1,
+                    Text=sel or"Select...",
+                    TextColor3=Color3.fromRGB(200,200,200),
+                    Font=Enum.Font.Gotham,
+                    TextSize=10,
+                    TextXAlignment=Enum.TextXAlignment.Left,
+                    Parent=DB
+                })
+                
+                local DI=Cr("TextLabel",{
+                    Position=UDim2.new(1,-24,0,5),
+                    Size=UDim2.new(0,16,0,16),
+                    BackgroundTransparency=1,
+                    Text="▼",
+                    TextColor3=Color3.fromRGB(150,150,150),
+                    Font=Enum.Font.Gotham,
+                    TextSize=10,
+                    Parent=DB
+                })
+                
+                local DC=Cr("ScrollingFrame",{
+                    Position=UDim2.new(0,0,1,2),
+                    Size=UDim2.new(1,0,0,0),
+                    BackgroundColor3=Color3.fromRGB(18,18,18),
+                    BorderSizePixel=0,
+                    ClipsDescendants=true,
+                    ScrollBarThickness=3,
+                    ScrollBarImageColor3=Color3.fromRGB(60,60,60),
+                    CanvasSize=UDim2.new(0,0,0,0),
+                    AutomaticCanvasSize=Enum.AutomaticSize.Y,
+                    Parent=Dp,
+                    ZIndex=6
+                })
+                Cr("UICorner",{CornerRadius=UDim.new(0,5),Parent=DC})
                 Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Parent=DC})
-                Cr("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=DC})
+                Cr("UIListLayout",{
+                    SortOrder=Enum.SortOrder.LayoutOrder,
+                    Padding=UDim.new(0,2),
+                    Parent=DC
+                })
 
                 if cfg.Flag then F[cfg.Flag]=sel end
 
                 for _,o in ipairs(cfg.Options)do
-                    local OB=Cr("TextButton",{Size=UDim2.new(1,0,0,22),BackgroundColor3=o==sel and Color3.fromRGB(25,25,25)or Color3.fromRGB(18,18,18),BorderSizePixel=0,Text=o,TextColor3=o==sel and Color3.fromRGB(220,220,220)or Color3.fromRGB(160,160,160),Font=Enum.Font.Gotham,TextSize=10,Parent=DC,ZIndex=7})
+                    local OB=Cr("TextButton",{
+                        Size=UDim2.new(1,0,0,24),
+                        BackgroundColor3=o==sel and Color3.fromRGB(28,28,28)or Color3.fromRGB(18,18,18),
+                        BorderSizePixel=0,
+                        Text=o,
+                        TextColor3=o==sel and Color3.fromRGB(230,230,230)or Color3.fromRGB(170,170,170),
+                        Font=Enum.Font.Gotham,
+                        TextSize=10,
+                        Parent=DC,
+                        ZIndex=7
+                    })
+                    
                     OB.MouseButton1Click:Connect(function()
                         Snd(12221967)
                         sel=o
                         DT.Text=o
                         if cfg.Flag then F[cfg.Flag]=o end
-                        if cfg.Callback then cfg.Callback(o)end
+                        if cfg.Callback then 
+                            task.spawn(cfg.Callback,o)
+                        end
+                        
                         for _,c in ipairs(DC:GetChildren())do
                             if c:IsA("TextButton")then
-                                Tw(c,{BackgroundColor3=c.Text==o and Color3.fromRGB(25,25,25)or Color3.fromRGB(18,18,18),TextColor3=c.Text==o and Color3.fromRGB(220,220,220)or Color3.fromRGB(160,160,160)})
+                                Tw(c,{
+                                    BackgroundColor3=c.Text==o and Color3.fromRGB(28,28,28)or Color3.fromRGB(18,18,18),
+                                    TextColor3=c.Text==o and Color3.fromRGB(230,230,230)or Color3.fromRGB(170,170,170)
+                                })
                             end
                         end
+                        
                         opn=false
                         Tw(DI,{Rotation=0},.2)
                         Tw(DC,{Size=UDim2.new(1,0,0,0)},.2)
@@ -296,37 +750,80 @@ function Lib.new(title, configName)
                     Snd(12221967)
                     opn=not opn
                     Tw(DI,{Rotation=opn and 180 or 0},.2)
-                    Tw(DC,{Size=UDim2.new(1,0,0,opn and math.min(#cfg.Options*24,120)or 0)},.2)
+                    local targetHeight=math.min(#cfg.Options*26,130)
+                    Tw(DC,{Size=UDim2.new(1,0,0,opn and targetHeight or 0)},.2)
                 end)
                 
-                return{Set=function(self,v)sel=v DT.Text=v if cfg.Flag then F[cfg.Flag]=v end if cfg.Callback then cfg.Callback(v)end end}
+                return{
+                    Set=function(self,v)
+                        sel=v 
+                        DT.Text=v 
+                        if cfg.Flag then F[cfg.Flag]=v end
+                        if cfg.Callback then 
+                            task.spawn(cfg.Callback,v)
+                        end
+                    end
+                }
             end
 
+            -- CreateButton
             function Tab:CreateButton(cfg)
-                local pr=LC
-                if #LC:GetChildren()>#RC:GetChildren()+2 then pr=RC end
+                local pr=#LC:GetChildren()<#RC:GetChildren()and LC or RC
                 
-                local Bt=Cr("TextButton",{Size=UDim2.new(1,0,0,28),BackgroundColor3=Color3.fromRGB(22,22,22),BorderSizePixel=0,Text=cfg.Name,TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.GothamBold,TextSize=11,AutoButtonColor=false,Parent=pr})
-                Cr("UICorner",{CornerRadius=UDim.new(0,4),Parent=Bt})
-                Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Parent=Bt})
+                local Bt=Cr("TextButton",{
+                    Size=UDim2.new(1,0,0,30),
+                    BackgroundColor3=Color3.fromRGB(22,22,22),
+                    BorderSizePixel=0,
+                    Text=cfg.Name,
+                    TextColor3=Color3.fromRGB(210,210,210),
+                    Font=Enum.Font.GothamBold,
+                    TextSize=11,
+                    AutoButtonColor=false,
+                    Parent=pr
+                })
+                Cr("UICorner",{CornerRadius=UDim.new(0,5),Parent=Bt})
+                Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Thickness=1,Parent=Bt})
+                
                 Bt.MouseButton1Click:Connect(function()
                     Snd(12221967)
                     Tw(Bt,{BackgroundColor3=A},.1)
-                    if cfg.Callback then cfg.Callback()end
+                    if cfg.Callback then 
+                        task.spawn(cfg.Callback)
+                    end
                     task.wait(.15)
                     Tw(Bt,{BackgroundColor3=Color3.fromRGB(22,22,22)},.1)
                 end)
             end
 
             table.insert(Sec.Tabs,{Frame=TF,Button=TB,Data=Tab})
-            if #Sec.Tabs==1 then
+            
+            -- Auto-select first tab
+            if #Sec.Tabs==1 and TabContainer.Visible then
                 TF.Visible=true
-                Tw(TB,{BackgroundColor3=A,TextColor3=Color3.fromRGB(255,255,255)})
+                Tw(TB,{
+                    BackgroundColor3=A,
+                    TextColor3=Color3.fromRGB(255,255,255)
+                })
             end
+            
             return Tab
         end
 
-        table.insert(W.Sections,{Frame=SF,Data=Sec})
+        table.insert(W.Sections,{
+            Button=SB,
+            TabContainer=TabContainer,
+            Data=Sec
+        })
+        
+        -- Auto-select first section
+        if #W.Sections==1 then
+            TabContainer.Visible=true
+            Tw(SB,{
+                BackgroundColor3=A,
+                TextColor3=Color3.fromRGB(255,255,255)
+            })
+        end
+        
         return Sec
     end
 
@@ -334,3 +831,423 @@ function Lib.new(title, configName)
 end
 
 return Lib
+
+--[[
+═══════════════════════════════════════════════════════════════
+                        EXAMPLE USAGE
+═══════════════════════════════════════════════════════════════
+]]--
+
+-- Load the library
+local Library = Lib
+
+-- Create main window
+local Window = Library.new("Refz Hub V2", "MyConfig")
+
+-- Set custom toggle key
+Window:SetToggleKey(Enum.KeyCode.RightShift)
+
+-- Welcome notification
+Window:Notify({
+    Title = "Welcome!",
+    Description = "Refz Hub loaded successfully. Press RightShift to toggle.",
+    Duration = 4
+})
+
+-- ═══════════════════════════════════════════════════════════════
+-- COMBAT SECTION
+-- ═══════════════════════════════════════════════════════════════
+local CombatSection = Window:CreateSection("Combat")
+
+-- Aimbot Tab
+local AimbotTab = CombatSection:CreateTab("Aimbot", "rbxassetid://10723407389")
+
+AimbotTab:CreateSection("Main Settings")
+
+local aimbotEnabled = false
+AimbotTab:CreateToggle({
+    Name = "Enable Aimbot",
+    Default = false,
+    Flag = "AimbotEnabled",
+    Callback = function(enabled)
+        aimbotEnabled = enabled
+        Window:Notify({
+            Title = enabled and "Aimbot Enabled" or "Aimbot Disabled",
+            Description = enabled and "Auto-aim is now active" or "Auto-aim has been disabled",
+            Duration = 2
+        })
+        print("Aimbot:", enabled)
+    end
+})
+
+AimbotTab:CreateSlider({
+    Name = "Aim Smoothness",
+    Min = 1,
+    Max = 100,
+    Default = 50,
+    Flag = "AimSmooth",
+    Callback = function(value)
+        print("Aim Smoothness:", value)
+    end
+})
+
+AimbotTab:CreateSlider({
+    Name = "FOV Radius",
+    Min = 50,
+    Max = 500,
+    Default = 200,
+    Flag = "FOVRadius",
+    Callback = function(value)
+        print("FOV Radius:", value)
+    end
+})
+
+AimbotTab:CreateDropdown({
+    Name = "Target Part",
+    Options = {"Head", "Torso", "HumanoidRootPart", "Closest"},
+    Default = "Head",
+    Flag = "TargetPart",
+    Callback = function(selected)
+        print("Target Part:", selected)
+    end
+})
+
+AimbotTab:CreateToggle({
+    Name = "Visible Check",
+    Default = true,
+    Flag = "VisibleCheck",
+    Callback = function(enabled)
+        print("Visible Check:", enabled)
+    end
+})
+
+AimbotTab:CreateToggle({
+    Name = "Team Check",
+    Default = true,
+    Flag = "TeamCheck",
+    Callback = function(enabled)
+        print("Team Check:", enabled)
+    end
+})
+
+-- ESP Tab
+local ESPTab = CombatSection:CreateTab("ESP", "rbxassetid://10734950309")
+
+ESPTab:CreateSection("ESP Settings")
+
+ESPTab:CreateToggle({
+    Name = "Enable ESP",
+    Default = false,
+    Flag = "ESPEnabled",
+    Callback = function(enabled)
+        print("ESP Enabled:", enabled)
+    end
+})
+
+ESPTab:CreateDropdown({
+    Name = "ESP Type",
+    Options = {"Box", "Skeleton", "Health Bar", "Name Only"},
+    Default = "Box",
+    Flag = "ESPType",
+    Callback = function(selected)
+        print("ESP Type:", selected)
+    end
+})
+
+ESPTab:CreateSlider({
+    Name = "Max Distance",
+    Min = 100,
+    Max = 5000,
+    Default = 1000,
+    Flag = "ESPDistance",
+    Callback = function(value)
+        print("ESP Max Distance:", value)
+    end
+})
+
+ESPTab:CreateToggle({
+    Name = "Show Health",
+    Default = true,
+    Flag = "ShowHealth",
+    Callback = function(enabled)
+        print("Show Health:", enabled)
+    end
+})
+
+ESPTab:CreateToggle({
+    Name = "Show Distance",
+    Default = true,
+    Flag = "ShowDistance",
+    Callback = function(enabled)
+        print("Show Distance:", enabled)
+    end
+})
+
+-- ═══════════════════════════════════════════════════════════════
+-- PLAYER SECTION
+-- ═══════════════════════════════════════════════════════════════
+local PlayerSection = Window:CreateSection("Player")
+
+-- Movement Tab
+local MovementTab = PlayerSection:CreateTab("Movement", "rbxassetid://10734898355")
+
+MovementTab:CreateSection("Movement Settings")
+
+local speedSlider = MovementTab:CreateSlider({
+    Name = "Walk Speed",
+    Min = 16,
+    Max = 200,
+    Default = 16,
+    Flag = "WalkSpeed",
+    Callback = function(value)
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.WalkSpeed = value
+        end
+        print("Walk Speed:", value)
+    end
+})
+
+MovementTab:CreateSlider({
+    Name = "Jump Power",
+    Min = 50,
+    Max = 300,
+    Default = 50,
+    Flag = "JumpPower",
+    Callback = function(value)
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.JumpPower = value
+        end
+        print("Jump Power:", value)
+    end
+})
+
+local infJump = false
+MovementTab:CreateToggle({
+    Name = "Infinite Jump",
+    Default = false,
+    Flag = "InfiniteJump",
+    Callback = function(enabled)
+        infJump = enabled
+        print("Infinite Jump:", enabled)
+    end
+})
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infJump then
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+MovementTab:CreateToggle({
+    Name = "Flight",
+    Default = false,
+    Flag = "Flight",
+    Callback = function(enabled)
+        print("Flight:", enabled)
+        -- Add your flight code here
+    end
+})
+
+MovementTab:CreateToggle({
+    Name = "Noclip",
+    Default = false,
+    Flag = "Noclip",
+    Callback = function(enabled)
+        print("Noclip:", enabled)
+        -- Add your noclip code here
+    end
+})
+
+-- Character Tab
+local CharacterTab = PlayerSection:CreateTab("Character", "rbxassetid://10747374131")
+
+CharacterTab:CreateSection("Character Mods")
+
+CharacterTab:CreateToggle({
+    Name = "God Mode",
+    Default = false,
+    Flag = "GodMode",
+    Callback = function(enabled)
+        print("God Mode:", enabled)
+    end
+})
+
+CharacterTab:CreateToggle({
+    Name = "Invisibility",
+    Default = false,
+    Flag = "Invisibility",
+    Callback = function(enabled)
+        print("Invisibility:", enabled)
+    end
+})
+
+CharacterTab:CreateSlider({
+    Name = "Field of View",
+    Min = 70,
+    Max = 120,
+    Default = 70,
+    Flag = "FOV",
+    Callback = function(value)
+        workspace.CurrentCamera.FieldOfView = value
+        print("FOV:", value)
+    end
+})
+
+CharacterTab:CreateButton({
+    Name = "Reset Character",
+    Callback = function()
+        game.Players.LocalPlayer.Character.Humanoid.Health = 0
+        Window:Notify({
+            Title = "Character Reset",
+            Description = "Respawning your character...",
+            Duration = 2
+        })
+    end
+})
+
+-- ═══════════════════════════════════════════════════════════════
+-- MISC SECTION
+-- ═══════════════════════════════════════════════════════════════
+local MiscSection = Window:CreateSection("Misc")
+
+-- Utility Tab
+local UtilityTab = MiscSection:CreateTab("Utility", "rbxassetid://10734950309")
+
+UtilityTab:CreateSection("Utilities")
+
+UtilityTab:CreateToggle({
+    Name = "Auto Farm",
+    Default = false,
+    Flag = "AutoFarm",
+    Callback = function(enabled)
+        print("Auto Farm:", enabled)
+    end
+})
+
+UtilityTab:CreateToggle({
+    Name = "Auto Collect Items",
+    Default = false,
+    Flag = "AutoCollect",
+    Callback = function(enabled)
+        print("Auto Collect:", enabled)
+    end
+})
+
+UtilityTab:CreateButton({
+    Name = "Teleport to Spawn",
+    Callback = function()
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("HumanoidRootPart") then
+            char.HumanoidRootPart.CFrame = CFrame.new(0, 50, 0)
+            Window:Notify({
+                Title = "Teleported",
+                Description = "Moved to spawn point",
+                Duration = 2
+            })
+        end
+    end
+})
+
+UtilityTab:CreateDropdown({
+    Name = "Teleport Location",
+    Options = {"Spawn", "Shop", "Boss Arena", "Secret Area"},
+    Default = "Spawn",
+    Flag = "TeleportLocation",
+    Callback = function(selected)
+        print("Selected Location:", selected)
+    end
+})
+
+-- Settings Tab
+local SettingsTab = MiscSection:CreateTab("Settings", "rbxassetid://10734898355")
+
+SettingsTab:CreateSection("UI Configuration")
+
+SettingsTab:CreateSlider({
+    Name = "UI Scale",
+    Min = 80,
+    Max = 120,
+    Default = 100,
+    Flag = "UIScale",
+    Callback = function(value)
+        print("UI Scale:", value, "%")
+    end
+})
+
+SettingsTab:CreateDropdown({
+    Name = "Theme Color",
+    Options = {"Red", "Blue", "Green", "Purple", "Orange"},
+    Default = "Red",
+    Flag = "ThemeColor",
+    Callback = function(selected)
+        print("Theme:", selected)
+        Window:Notify({
+            Title = "Theme Changed",
+            Description = "Theme set to " .. selected,
+            Duration = 2
+        })
+    end
+})
+
+SettingsTab:CreateToggle({
+    Name = "Show Notifications",
+    Default = true,
+    Flag = "ShowNotifications",
+    Callback = function(enabled)
+        print("Notifications:", enabled)
+    end
+})
+
+SettingsTab:CreateButton({
+    Name = "Destroy UI",
+    Callback = function()
+        Window:Notify({
+            Title = "Goodbye!",
+            Description = "UI will be destroyed in 2 seconds...",
+            Duration = 2
+        })
+        task.wait(2)
+        game:GetService("CoreGui"):FindFirstChild("RefzUI_" .. tostring(game.JobId)):Destroy()
+    end
+})
+
+-- ═══════════════════════════════════════════════════════════════
+-- PROGRAMMATIC CONTROL EXAMPLES
+-- ═══════════════════════════════════════════════════════════════
+
+-- Auto-set values after 3 seconds
+task.spawn(function()
+    task.wait(3)
+    speedSlider:Set(75)
+    Window:Notify({
+        Title = "Auto Configuration",
+        Description = "Walk speed automatically set to 75!",
+        Duration = 3
+    })
+end)
+
+-- Print all saved flags
+task.spawn(function()
+    task.wait(1)
+    print("═══════════ SAVED FLAGS ═══════════")
+    for flag, value in pairs(F) do
+        print(flag .. " = " .. tostring(value))
+    end
+    print("════════════════════════════════════")
+end)
+
+-- Final notification
+Window:Notify({
+    Title = "Setup Complete!",
+    Description = "All features loaded. Press RightShift to toggle UI.",
+    Duration = 5
+})
+
+print("✓ Refz Hub loaded successfully!")
+print("✓ Press RightShift to toggle the UI")
+print("✓ All flags saved to global table 'F'")
