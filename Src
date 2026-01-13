@@ -8,7 +8,8 @@ local M=U.TouchEnabled and not U.KeyboardEnabled
 local A=Color3.fromRGB(207,1,0)
 local Th={}
 local F={}
-local C={}
+local Lib={}
+Lib.__index=Lib
 
 local function Tw(o,p,d)
 T:Create(o,TweenInfo.new(d or.15,Enum.EasingStyle.Quad,Enum.EasingDirection.Out),p):Play()
@@ -34,17 +35,28 @@ if p.Parent then i.Parent=p.Parent end
 return i
 end
 
-local Lib={}
+function Lib.new(t,cf)
+local self=setmetatable({},Lib)
+self.title=t or"Refz"
+self.configFolder=cf or t or"Refz"
+self.sections={}
+self.currentTab=nil
+self.minimized=false
+self._toggleKey=Enum.KeyCode.RightControl
+self._visible=true
+self._configElements={}
+self.notifications={}
 
-function Lib:Window(t)
-local W={Pages={},CP=nil,TK=Enum.KeyCode.RightShift,V=true,N={}}
 local G=Cr("ScreenGui",{Name="Refz",ZIndexBehavior=Enum.ZIndexBehavior.Sibling,Parent=R:IsStudio()and L.PlayerGui or game:GetService("CoreGui")})
+self.screenGui=G
 local mw,mh=M and 400 or 500,M and 300 or 350
 local Main=Cr("Frame",{Name="Main",AnchorPoint=Vector2.new(.5,.5),Position=UDim2.new(.5,0,.5,0),Size=UDim2.new(0,mw,0,mh),BackgroundColor3=Color3.fromRGB(15,15,15),BorderSizePixel=0,Parent=G})
+self.container=Main
 Cr("UICorner",{CornerRadius=UDim.new(0,2),Parent=Main})
 Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Parent=Main})
 
 local Hdr=Cr("Frame",{Size=UDim2.new(1,0,0,28),BackgroundColor3=Color3.fromRGB(20,20,20),BorderSizePixel=0,Parent=Main})
+self.topBar=Hdr
 Cr("UICorner",{CornerRadius=UDim.new(0,2),Parent=Hdr})
 local Tit=Cr("TextLabel",{Position=UDim2.new(0,8,0,0),Size=UDim2.new(1,-16,1,0),BackgroundTransparency=1,Text=t,TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.GothamBold,TextSize=M and 11 or 13,TextXAlignment=Enum.TextXAlignment.Left,Parent=Hdr})
 
@@ -54,20 +66,23 @@ Cr("UICorner",{CornerRadius=UDim.new(0,6),Parent=MT})
 Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Parent=MT})
 MT.MouseButton1Click:Connect(function()
 Snd(12221967)
-W.V=not W.V
-Tw(Main,{BackgroundTransparency=W.V and 0 or 1},.3)
+self._visible=not self._visible
+Tw(Main,{BackgroundTransparency=self._visible and 0 or 1},.3)
 for _,o in ipairs(Main:GetDescendants())do
-if o:IsA("GuiObject")then o.Visible=W.V end
+if o:IsA("GuiObject")then o.Visible=self._visible end
 end
 end)
 end
 
 local Inr=Cr("Frame",{Position=UDim2.new(0,1,0,29),Size=UDim2.new(1,-2,1,-30),BackgroundColor3=Color3.fromRGB(13,13,13),BorderSizePixel=0,Parent=Main})
+self.mainContent=Inr
 Cr("UICorner",{CornerRadius=UDim.new(0,2),Parent=Inr})
-local Div=Cr("Frame",{Position=UDim2.new(0,135,0,-28),Size=UDim2.new(0,1,1.1,-5),BackgroundColor3=Color3.fromRGB(35,35,35),BorderSizePixel=0,Parent=Inr})
-local TC=Cr("Frame",{Position=UDim2.new(0,5,0,8),Size=UDim2.new(0,120,1,-16),BackgroundTransparency=1,Parent=Inr})
+local Div=Cr("Frame",{Position=UDim2.new(0,145,0,-28),Size=UDim2.new(0,1,1.1,-5),BackgroundColor3=Color3.fromRGB(35,35,35),BorderSizePixel=0,Parent=Inr})
+local TC=Cr("Frame",{Position=UDim2.new(0,5,0,8),Size=UDim2.new(0,130,1,-16),BackgroundTransparency=1,Parent=Inr})
+self.sectionsContainer=TC
 Cr("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,3),Parent=TC})
-local PC=Cr("Frame",{Position=UDim2.new(0,150,0,8),Size=UDim2.new(1,-160,1,-16),BackgroundTransparency=1,Parent=Inr})
+local PC=Cr("Frame",{Position=UDim2.new(0,160,0,8),Size=UDim2.new(1,-170,1,-16),BackgroundTransparency=1,Parent=Inr})
+self.contentContainer=PC
 
 local Dr=Cr("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",ZIndex=2,Parent=Hdr})
 local drg,ds,sp=false,nil,nil
@@ -91,91 +106,160 @@ end
 end)
 
 U.InputBegan:Connect(function(i,gp)
-if not gp and i.KeyCode==W.TK then
-W.V=not W.V
-Tw(Main,{BackgroundTransparency=W.V and 0 or 1},.3)
+if not gp and i.KeyCode==self._toggleKey then
+self._visible=not self._visible
+Tw(Main,{BackgroundTransparency=self._visible and 0 or 1},.3)
 for _,o in ipairs(Main:GetDescendants())do
-if o:IsA("GuiObject")then Tw(o,{Visible=W.V},0)end
+if o:IsA("GuiObject")then o.Visible=self._visible end
 end
 end
 end)
 
-function W:Notify(tx,dur)
+Tw(Main,{Size=UDim2.new(0,M and 420 or 550,0,M and 350 or 400)},.4)
+return self
+end
+
+function Lib:SetToggleKey(k)
+self._toggleKey=k
+end
+
+function Lib:Notify(cfg)
 Snd(12221967)
-dur=dur or 3
-local nw,nh=200,40
-local nt=Cr("Frame",{Size=UDim2.new(0,nw,0,nh),BackgroundColor3=Color3.fromRGB(20,20,20),BorderSizePixel=0,Position=UDim2.new(1,-210,1,10),ClipsDescendants=true,Parent=G})
+local tx=cfg.Title or"Notification"
+local ds=cfg.Description or""
+local dur=cfg.Duration or 3
+local nw,nh=200,45
+local nt=Cr("Frame",{Size=UDim2.new(0,nw,0,nh),BackgroundColor3=Color3.fromRGB(20,20,20),BorderSizePixel=0,Position=UDim2.new(1,-210,1,10),ClipsDescendants=true,Parent=self.screenGui})
 Cr("UICorner",{CornerRadius=UDim.new(0,2),Parent=nt})
 Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Parent=nt})
-local ntx=Cr("TextLabel",{Position=UDim2.new(0,6,0,0),Size=UDim2.new(1,-12,1,0),BackgroundTransparency=1,Text=tx,TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.Gotham,TextSize=10,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,Parent=nt})
-table.insert(W.N,nt)
-for i,n in ipairs(W.N)do
-Tw(n,{Position=UDim2.new(1,-210,1,-6-(i*46))},.2)
+local ttl=Cr("TextLabel",{Position=UDim2.new(0,6,0,2),Size=UDim2.new(1,-12,0,16),BackgroundTransparency=1,Text=tx,TextColor3=Color3.fromRGB(220,220,220),Font=Enum.Font.GothamBold,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left,Parent=nt})
+local dsc=Cr("TextLabel",{Position=UDim2.new(0,6,0,18),Size=UDim2.new(1,-12,0,24),BackgroundTransparency=1,Text=ds,TextColor3=Color3.fromRGB(160,160,160),Font=Enum.Font.Gotham,TextSize=9,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top,Parent=nt})
+table.insert(self.notifications,nt)
+for i,n in ipairs(self.notifications)do
+Tw(n,{Position=UDim2.new(1,-210,1,-6-(i*51))},.2)
 end
 task.delay(dur,function()
 Tw(nt,{Position=UDim2.new(1,6,nt.Position.Y.Scale,nt.Position.Y.Offset)},.2)
 task.wait(.3)
-table.remove(W.N,table.find(W.N,nt))
+table.remove(self.notifications,table.find(self.notifications,nt))
 nt:Destroy()
-for i,n in ipairs(W.N)do
-Tw(n,{Position=UDim2.new(1,-210,1,-6-(i*46))},.2)
+for i,n in ipairs(self.notifications)do
+Tw(n,{Position=UDim2.new(1,-210,1,-6-(i*51))},.2)
 end
 end)
 end
 
-function W:Page(nm)
-local Pg={Name=nm,Sections={}}
-local TB=Cr("TextButton",{Size=UDim2.new(1,0,0,26),BackgroundColor3=Color3.fromRGB(18,18,18),BackgroundTransparency=1,BorderSizePixel=0,Text="",AutoButtonColor=false,Parent=TC})
+function Lib:CreateSection(nm)
+local Sec={name=nm,tabs={},expanded=true,_library=self}
+local SF=Cr("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=self.sectionsContainer})
+local HC=Cr("Frame",{Size=UDim2.new(1,0,0,22),BackgroundTransparency=1,Parent=SF})
+local HB=Cr("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",Parent=HC})
+local HL=Cr("TextLabel",{Position=UDim2.new(0,4,0,0),Size=UDim2.new(1,-24,1,0),BackgroundTransparency=1,Text=nm,TextColor3=Color3.fromRGB(160,160,160),Font=Enum.Font.Gotham,TextSize=M and 10 or 11,TextXAlignment=Enum.TextXAlignment.Left,Parent=HC})
+local Ar=Cr("ImageButton",{Position=UDim2.new(1,-18,0.5,-6),Size=UDim2.new(0,12,0,12),BackgroundTransparency=1,Image="rbxassetid://105558791071013",ImageColor3=Color3.fromRGB(160,160,160),Rotation=0,Parent=HC})
+local TbC=Cr("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,ClipsDescendants=true,Parent=SF})
+Cr("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,2),Parent=TbC})
+Cr("UIPadding",{PaddingLeft=UDim.new(0,12),Parent=TbC})
+
+local function Tgl()
+Sec.expanded=not Sec.expanded
+Tw(Ar,{Rotation=Sec.expanded and 0 or 180},.2)
+TbC.Visible=Sec.expanded
+end
+HB.MouseButton1Click:Connect(Tgl)
+Ar.MouseButton1Click:Connect(Tgl)
+
+Sec.frame=SF
+Sec.tabsContainer=TbC
+table.insert(self.sections,Sec)
+return setmetatable({},{__index=Sec,CreateTab=function(_,...)return Lib._CreateTab(Sec,...)end})
+end
+
+function Lib._CreateTab(sec,nm,ic)
+local Tab={name=nm,elements={},_library=sec._library}
+local TB=Cr("Frame",{Size=UDim2.new(0,118,0,24),BackgroundColor3=Color3.fromRGB(18,18,18),BackgroundTransparency=1,BorderSizePixel=0,Parent=sec.tabsContainer})
 Cr("UICorner",{CornerRadius=UDim.new(0,2),Parent=TB})
-local TA=Cr("Frame",{Position=UDim2.new(0,0,0,3),Size=UDim2.new(0,2,0.75,-6),BackgroundColor3=A,BackgroundTransparency=1,BorderSizePixel=0,Parent=TB})
+local TS=Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Transparency=1,Parent=TB})
+local TA=Cr("Frame",{Position=UDim2.new(0,0,0,2),Size=UDim2.new(0,2,0.75,-4),BackgroundColor3=A,BackgroundTransparency=1,BorderSizePixel=0,Parent=TB})
 table.insert(Th,TA)
 Cr("UICorner",{CornerRadius=UDim.new(0,50),Parent=TA})
-local TL=Cr("TextLabel",{Position=UDim2.new(0,8,0,0),Size=UDim2.new(1,-16,1,0),BackgroundTransparency=1,Text=nm,TextColor3=Color3.fromRGB(120,120,120),Font=Enum.Font.Gotham,TextSize=M and 10 or 11,TextXAlignment=Enum.TextXAlignment.Left,Parent=TB})
+local Ic=Cr("ImageLabel",{Position=UDim2.new(0,6,0.5,0),Size=UDim2.new(0,13,0,13),AnchorPoint=Vector2.new(0,.5),BackgroundTransparency=1,Image=ic or"rbxassetid://112235310154264",ImageColor3=Color3.fromRGB(120,120,120),Parent=TB})
+local TL=Cr("TextLabel",{Position=UDim2.new(0,24,0,0),Size=UDim2.new(1,-30,1,0),BackgroundTransparency=1,Text=nm,TextColor3=Color3.fromRGB(120,120,120),Font=Enum.Font.Gotham,TextSize=M and 9 or 10,TextXAlignment=Enum.TextXAlignment.Left,Parent=TB})
+local CB=Cr("TextButton",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Text="",Parent=TB})
 
-local PF=Cr("Frame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,Visible=false,Parent=PC})
-local LS=Cr("ScrollingFrame",{Size=UDim2.new(.5,-2,1,0),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,ScrollBarImageColor3=Color3.fromRGB(60,60,60),CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,Parent=PF})
-local LC=Cr("Frame",{Size=UDim2.new(1,-3,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=LS})
-Cr("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,6),Parent=LC})
-local RS=Cr("ScrollingFrame",{Position=UDim2.new(.5,2,0,0),Size=UDim2.new(.5,-2,1,0),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,ScrollBarImageColor3=Color3.fromRGB(60,60,60),CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,Parent=PF})
-local RC=Cr("Frame",{Size=UDim2.new(1,-3,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=RS})
-Cr("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,6),Parent=RC})
+local PF=Cr("ScrollingFrame",{Size=UDim2.new(1,0,1,0),BackgroundTransparency=1,BorderSizePixel=0,ScrollBarThickness=3,ScrollBarImageColor3=Color3.fromRGB(60,60,60),CanvasSize=UDim2.new(0,0,0,0),AutomaticCanvasSize=Enum.AutomaticSize.Y,Visible=false,Parent=sec._library.contentContainer})
+Tab.content=PF
+local Ct=Cr("Frame",{Size=UDim2.new(1,-3,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=PF})
+Cr("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,6),Parent=Ct})
 
-local function Sel()
-for _,p in ipairs(W.Pages)do
-p.Frame.Visible=false
-Tw(p.Button,{BackgroundTransparency=1})
-Tw(p.Label,{TextColor3=Color3.fromRGB(120,120,120)})
-Tw(p.Accent,{BackgroundTransparency=1})
-end
-PF.Visible=true
-Tw(TB,{BackgroundTransparency=0})
-Tw(TL,{TextColor3=Color3.fromRGB(200,200,200)})
-Tw(TA,{BackgroundTransparency=0})
-end
-
-TB.MouseButton1Click:Connect(function()
+CB.MouseButton1Click:Connect(function()
 Snd(12221967)
-Sel()
+Lib._SelectTab(sec._library,Tab,TB,TS,Ic,TL,TA)
 end)
 
-function Pg:Section(nm,sd)
-local Sc={}
-sd=sd or"left"
-local pr=sd=="left"and LC or RC
-local SF=Cr("Frame",{Size=UDim2.new(1,0,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundColor3=Color3.fromRGB(18,18,18),BorderSizePixel=0,Parent=pr})
-Sc.Frame=SF
-Cr("UICorner",{CornerRadius=UDim.new(0,2),Parent=SF})
-Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Parent=SF})
-local ST=Cr("TextLabel",{Position=UDim2.new(0,6,0,1),Size=UDim2.new(1,-12,0,18),BackgroundTransparency=1,Text=nm,TextColor3=Color3.fromRGB(180,180,180),Font=Enum.Font.Gotham,TextSize=M and 10 or 11,TextXAlignment=Enum.TextXAlignment.Left,Parent=SF})
-local Dv=Cr("Frame",{Position=UDim2.new(0,0,0,18),Size=UDim2.new(1,0,0,1),BackgroundColor3=Color3.fromRGB(35,35,35),BorderSizePixel=0,Parent=SF})
-local Ct=Cr("Frame",{Position=UDim2.new(0,8,0,26),Size=UDim2.new(1,-16,0,0),AutomaticSize=Enum.AutomaticSize.Y,BackgroundTransparency=1,Parent=SF})
-Cr("UIListLayout",{SortOrder=Enum.SortOrder.LayoutOrder,Padding=UDim.new(0,6),Parent=Ct})
-Cr("UIPadding",{PaddingBottom=UDim.new(0,8),Parent=Ct})
+CB.MouseEnter:Connect(function()
+if sec._library.currentTab~=Tab then
+Tw(TB,{BackgroundTransparency=.7},.1)
+end
+end)
 
-function Sc:Toggle(nm,df,cb)
-cb=cb or function()end
-local tg=df or false
-local Tg=Cr("TextButton",{Size=UDim2.new(1,0,0,16),BackgroundTransparency=1,Text="",Parent=Ct})
+CB.MouseLeave:Connect(function()
+if sec._library.currentTab~=Tab then
+Tw(TB,{BackgroundTransparency=1},.1)
+end
+end)
+
+Tab.button=TB
+Tab.stroke=TS
+Tab.icon=Ic
+Tab.textLabel=TL
+Tab.accent=TA
+Tab._content=Ct
+table.insert(sec.tabs,Tab)
+
+if not sec._library.currentTab then
+Lib._SelectTab(sec._library,Tab,TB,TS,Ic,TL,TA)
+end
+
+return setmetatable({},{__index=Tab,
+CreateSection=function(_,n)return Lib._CreateContentSection(Tab,n)end,
+CreateToggle=function(_,c)return Lib._CreateToggle(Tab,c)end,
+CreateSlider=function(_,c)return Lib._CreateSlider(Tab,c)end,
+CreateDropdown=function(_,c)return Lib._CreateDropdown(Tab,c)end,
+CreateButton=function(_,c)return Lib._CreateButton(Tab,c)end
+})
+end
+
+function Lib._SelectTab(lib,tab,btn,stroke,icon,label,accent)
+if lib.currentTab then
+lib.currentTab.content.Visible=false
+Tw(lib.currentTab.button,{BackgroundTransparency=1},.15)
+Tw(lib.currentTab.icon,{ImageColor3=Color3.fromRGB(120,120,120)},.15)
+Tw(lib.currentTab.textLabel,{TextColor3=Color3.fromRGB(120,120,120)},.15)
+Tw(lib.currentTab.accent,{BackgroundTransparency=1},.15)
+lib.currentTab.stroke.Transparency=1
+end
+lib.currentTab=tab
+tab.content.Visible=true
+Tw(btn,{BackgroundTransparency=0},.15)
+Tw(icon,{ImageColor3=Color3.fromRGB(200,200,200)},.15)
+Tw(label,{TextColor3=Color3.fromRGB(200,200,200)},.15)
+Tw(accent,{BackgroundTransparency=0},.15)
+stroke.Transparency=1
+end
+
+function Lib._CreateContentSection(tab,nm)
+local Sec=Cr("TextLabel",{Size=UDim2.new(1,0,0,20),BackgroundTransparency=1,Text=nm,TextColor3=Color3.fromRGB(160,160,160),Font=Enum.Font.Gotham,TextSize=11,TextXAlignment=Enum.TextXAlignment.Left,Parent=tab._content})
+return Sec
+end
+
+function Lib._CreateToggle(tab,cfg)
+local nm=cfg.Name or"Toggle"
+local df=cfg.Default or false
+local cb=cfg.Callback or function()end
+local fl=cfg.Flag
+local tg=df
+
+local Tg=Cr("TextButton",{Size=UDim2.new(1,0,0,16),BackgroundTransparency=1,Text="",Parent=tab._content})
 local TL=Cr("TextLabel",{Size=UDim2.new(1,-40,0,16),BackgroundTransparency=1,Text=nm,TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.Gotham,TextSize=M and 10 or 11,TextXAlignment=Enum.TextXAlignment.Left,Parent=Tg})
 local TO=Cr("Frame",{Position=UDim2.new(1,-35,0,0),Size=UDim2.new(0,35,1,0),BackgroundColor3=Color3.fromRGB(10,10,10),BorderSizePixel=0,Parent=Tg})
 Cr("UICorner",{CornerRadius=UDim.new(0,8),Parent=TO})
@@ -184,22 +268,34 @@ table.insert(Th,TI)
 Cr("UICorner",{CornerRadius=UDim.new(0,8),Parent=TI})
 local Tc=Cr("Frame",{Position=tg and UDim2.new(1,-13,0.5,-4)or UDim2.new(0,4,0.5,-4),Size=UDim2.new(0,9,0,9),BackgroundColor3=Color3.fromRGB(255,255,255),BorderSizePixel=0,Parent=TO})
 Cr("UICorner",{CornerRadius=UDim.new(1,0),Parent=Tc})
-F[nm]=tg
+if fl then F[fl]=tg end
+
 Tg.MouseButton1Click:Connect(function()
 Snd(12221967)
 tg=not tg
-F[nm]=tg
+if fl then F[fl]=tg end
 Tw(TI,{BackgroundTransparency=tg and 0 or 1},.2)
 Tw(Tc,{Position=tg and UDim2.new(1,-13,0.5,-4)or UDim2.new(0,4,0.5,-4)},.2)
 cb(tg)
 end)
-return{Set=function(v)tg=v F[nm]=v Tw(TI,{BackgroundTransparency=tg and 0 or 1},.2)Tw(Tc,{Position=tg and UDim2.new(1,-13,0.5,-4)or UDim2.new(0,4,0.5,-4)},.2)cb(tg)end}
+
+if fl and tab._library then
+tab._library._configElements[fl]={type="Toggle",getValue=function()return tg end,setValue=function(v)tg=v Tw(TI,{BackgroundTransparency=tg and 0 or 1},.2)Tw(Tc,{Position=tg and UDim2.new(1,-13,0.5,-4)or UDim2.new(0,4,0.5,-4)},.2)cb(tg)end}
 end
 
-function Sc:Slider(nm,mn,mx,df,cb)
-cb=cb or function()end
-local sl,vl=false,df or mn
-local Sl=Cr("TextButton",{Size=UDim2.new(1,0,0,28),BackgroundTransparency=1,Text="",Parent=Ct})
+return{Set=function(v)tg=v if fl then F[fl]=v end Tw(TI,{BackgroundTransparency=tg and 0 or 1},.2)Tw(Tc,{Position=tg and UDim2.new(1,-13,0.5,-4)or UDim2.new(0,4,0.5,-4)},.2)cb(tg)end}
+end
+
+function Lib._CreateSlider(tab,cfg)
+local nm=cfg.Name or"Slider"
+local mn=cfg.Min or 0
+local mx=cfg.Max or 100
+local df=cfg.Default or 50
+local cb=cfg.Callback or function()end
+local fl=cfg.Flag
+local sl,vl=false,df
+
+local Sl=Cr("TextButton",{Size=UDim2.new(1,0,0,28),BackgroundTransparency=1,Text="",Parent=tab._content})
 local SL=Cr("TextLabel",{Size=UDim2.new(1,-10,0,15),BackgroundTransparency=1,Text=nm,TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.Gotham,TextSize=M and 10 or 11,TextXAlignment=Enum.TextXAlignment.Left,Parent=Sl})
 local SV=Cr("TextLabel",{Size=UDim2.new(1,0,0,15),BackgroundTransparency=1,Text=tostring(vl),TextColor3=Color3.fromRGB(120,120,120),Font=Enum.Font.Gotham,TextSize=10,TextXAlignment=Enum.TextXAlignment.Right,Parent=Sl})
 local SO=Cr("Frame",{Position=UDim2.new(0,0,1,-7),Size=UDim2.new(1,0,0,7),BackgroundColor3=Color3.fromRGB(10,10,10),BorderSizePixel=0,Parent=Sl})
@@ -218,7 +314,7 @@ local sx=(v-mn)/(mx-mn)
 Tw(Fl,{Size=UDim2.new(sx,0,1,0)},.1)
 SV.Text=tostring(v)
 vl=v
-F[nm]=v
+if fl then F[fl]=v end
 cb(v)
 end
 
@@ -249,13 +345,23 @@ end
 end)
 
 Set(vl)
+
+if fl and tab._library then
+tab._library._configElements[fl]={type="Slider",getValue=function()return vl end,setValue=function(v)Set(v)end}
+end
+
 return{Set=Set}
 end
 
-function Sc:Dropdown(nm,op,df,cb)
-cb=cb or function()end
+function Lib._CreateDropdown(tab,cfg)
+local nm=cfg.Name or"Dropdown"
+local op=cfg.Options or{}
+local df=cfg.Default
+local cb=cfg.Callback or function()end
+local fl=cfg.Flag
 local opn,sel=false,df
-local Dp=Cr("Frame",{Size=UDim2.new(1,0,0,42),BackgroundTransparency=1,Parent=Ct,ZIndex=1000,ClipsDescendants=false})
+
+local Dp=Cr("Frame",{Size=UDim2.new(1,0,0,42),BackgroundTransparency=1,Parent=tab._content,ZIndex=1000,ClipsDescendants=false})
 local DL=Cr("TextLabel",{Size=UDim2.new(1,-10,0,15),BackgroundTransparency=1,Text=nm,TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.Gotham,TextSize=M and 10 or 11,TextXAlignment=Enum.TextXAlignment.Left,Parent=Dp})
 local DB=Cr("TextButton",{Position=UDim2.new(0,0,1,-22),Size=UDim2.new(1,0,0,22),BackgroundColor3=Color3.fromRGB(22,22,22),BorderSizePixel=0,Text="",AutoButtonColor=false,Parent=Dp,ZIndex=5})
 Cr("UICorner",{CornerRadius=UDim.new(0,2),Parent=DB})
@@ -276,7 +382,7 @@ OB.MouseButton1Click:Connect(function()
 Snd(12221967)
 sel=o
 DT.Text=o
-F[nm]=o
+if fl then F[fl]=o end
 cb(o)
 for _,c in ipairs(DC:GetChildren())do
 if c:IsA("TextButton")then
@@ -303,11 +409,16 @@ opn=not opn
 Tw(DI,{Rotation=opn and 180 or 0,ImageColor3=opn and Color3.fromRGB(200,200,200)or Color3.fromRGB(120,120,120)},.2)
 Tw(DC,{Size=UDim2.new(1,0,0,opn and #op*20 or 0)},.2)
 end)
+
+if fl and tab._library then
+tab._library._configElements[fl]={type="Dropdown",getValue=function()return sel end,setValue=function(v)sel=v DT.Text=v if fl then F[fl]=v end cb(v)end}
+end
 end
 
-function Sc:Button(nm,cb)
-cb=cb or function()end
-local Bt=Cr("TextButton",{Size=UDim2.new(1,0,0,22),BackgroundColor3=Color3.fromRGB(18,18,18),BorderSizePixel=0,Text=nm,TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.Gotham,TextSize=11,AutoButtonColor=false,Parent=Ct})
+function Lib._CreateButton(tab,cfg)
+local nm=cfg.Name or"Button"
+local cb=cfg.Callback or function()end
+local Bt=Cr("TextButton",{Size=UDim2.new(1,0,0,22),BackgroundColor3=Color3.fromRGB(18,18,18),BorderSizePixel=0,Text=nm,TextColor3=Color3.fromRGB(200,200,200),Font=Enum.Font.Gotham,TextSize=11,AutoButtonColor=false,Parent=tab._content})
 Cr("UICorner",{CornerRadius=UDim.new(0,2),Parent=Bt})
 Cr("UIStroke",{Color=Color3.fromRGB(35,35,35),Parent=Bt})
 Bt.MouseButton1Click:Connect(function()
@@ -317,19 +428,6 @@ cb()
 task.wait(.1)
 Tw(Bt,{TextColor3=Color3.fromRGB(200,200,200)},.1)
 end)
-end
-
-table.insert(Pg.Sections,Sc)
-return Sc
-end
-
-table.insert(W.Pages,{Frame=PF,Button=TB,Label=TL,Accent=TA,Data=Pg})
-if #W.Pages==1 then Sel()end
-return Pg
-end
-
-Tw(Main,{Size=UDim2.new(0,M and 420 or 550,0,M and 350 or 400)},.4)
-return W
 end
 
 return Lib
